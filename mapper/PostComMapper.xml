@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="postComVO">
+	
+	<!-- 댓글쓰기 -->
+	<insert id="createPostCom"  parameterType="postComVO">
+		insert into cs_post_com (post_id, user_id, post_comment, created_date, updated_date)
+		values (#{post_id}, #{user_id}, #{post_comment}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	</insert>
+	
+	<!-- 댓글 삭제 -->
+	<delete id="deletePostCom"  parameterType="postComVO">
+		delete from cs_post_com 
+		where post_com_id = #{post_com_id} and user_id = #{user_id}
+	</delete>
+	
+	<!-- 댓글 list -->
+	<select id="postComList" parameterType="int" resultType="postComVO">
+		select * from cs_post_com where post_id = #{post_id}
+	</select>
+
+</mapper>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mat.zip.mapper.ReviewMapper">
+
+	<!-- 리뷰글 작성 -->
+	<insert id="insertReview" parameterType="reviewVO">
+	    INSERT INTO cs_review 
+	    (user_id, receipt_id, store_id, store_cg, category, review_title, review_content, review_file, review_scope, emoticon, created_date, updated_date, review_view_count)
+	    VALUES 
+	    (#{user_id}, #{receipt_id}, #{store_id}, #{store_cg}, #{category}, #{review_title}, #{review_content}, #{review_file}, #{review_scope}, #{emoticon}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+	</insert>
+	
+	<!-- 영수증 등록 정보를 가져오자 -->
+	<resultMap id="MZRegisterReceiptDTOMap" type="com.mat.zip.board.model.MZRegisterReceiptDTO">
+    <association property="mzRegisterInfoVO" javaType="com.mat.zip.registerAndSearch.model.MZRegisterInfoVO">
+        <result property="no" column="m_no" />
+        <result property="userId" column="m_userId" />
+        <result property="storeAddress" column="m_storeAddress" />
+        <result property="storePhoneNumber" column="m_storePhoneNumber" />
+        <result property="buyTime" column="m_buyTime" />
+    </association>
+    <association property="restaurantVO" javaType="com.mat.zip.registerAndSearch.model.RestaurantVO">
+        <result property="no" column="r_no" />
+        <result property="landNumAddress" column="r_landNumAddress" />
+        <result property="roadNameAddress" column="r_roadNameAddress" />
+        <result property="name" column="r_name" />
+        <result property="status" column="r_status" />
+        <result property="tel" column="r_tel" />
+        <result property="food" column="r_food" />
+    </association>
+	</resultMap>
+	
+	<select id="getReceiptWithRestaurant" parameterType="String" resultMap="MZRegisterReceiptDTOMap">
+	    <!-- SELECT r.no as r_no, r.landNumAddress as r_landNumAddress, r.roadNameAddress as r_roadNameAddress,
+	           r.name as r_name, r.status as r_status, r.tel as r_tel, r.food as r_food,
+	           m.no as m_no, m.userId as m_userId, m.storeAddress as m_storeAddress,
+	           m.storePhoneNumber as m_storePhoneNumber, m.buyTime as m_buyTime
+	    FROM mzRegisterInfo m 
+	    JOIN restaurant r ON m.storePhoneNumber = r.tel 
+	    WHERE m.userID = #{user_id} 
+	    AND m.no NOT IN 
+	    (SELECT receipt_id FROM cs_review) -->
+	    
+	    SELECT 
+		    r.no as r_no, r.landNumAddress as r_landNumAddress, 
+		    r.roadNameAddress as r_roadNameAddress, r.name as r_name, 
+		    r.status as r_status, r.tel as r_tel, r.food as r_food,
+		    m.no as m_no, m.userId as m_userId, m.storeAddress as m_storeAddress,
+		    m.storePhoneNumber as m_storePhoneNumber, m.buyTime as m_buyTime
+		FROM 
+		    mzRegisterInfo m 
+		JOIN 
+		    restaurant r ON m.storePhoneNumber = r.tel 
+		LEFT JOIN
+		    cs_review cr ON m.no = cr.receipt_id
+		WHERE 
+		    m.userID = #{user_id} 
+		    AND cr.receipt_id IS NULL;
+	    
+	</select>
+	
+
+	<!-- 리뷰글 수정 -->
+	<update id="update" parameterType="reviewVO">
+		UPDATE cs_review SET
+		review_title = #{review_title},
+		review_content = #{review_content},
+		review_file = #{review_file},
+		emoticon = #{emoticon},
+		updated_date = CURRENT_TIMESTAMP
+		WHERE review_id = #{review_id} AND user_id = #{user_id}
+	</update>
+
+	<!-- 게시글 조회수 증가 -->
+	<update id="incrementReviewViewCount" parameterType="int">
+		UPDATE cs_review SET
+		review_view_count = review_view_count + 1
+		WHERE review_id = #{review_id}
+	</update>
+
+	<!-- 리뷰글 삭제 -->
+	<delete id="delete" parameterType="int">
+		DELETE FROM cs_review
+		WHERE review_id = #{review_id}
+	</delete>
+
+	<!-- 리뷰글 상세정보 조회 -->
+	<select id="oneReviewId" parameterType="int"
+		resultType="reviewVO">
+		SELECT * FROM cs_review WHERE review_id =
+		#{review_id}
+	</select>
+
+	<!-- 리뷰게시판 전체 list -->
+	<select id="allReview" resultType="reviewVO">
+		SELECT * FROM
+		cs_review
+	</select>
+	
+	<!-- 리뷰 content에서 조회할 모든 키워드와 이모티콘을 불러오는 쿼리문 -->
+	<select id="findAllEmojis" resultType="EmojiMapVO">
+    	SELECT * FROM emojiMap
+	</select>
+	
+	<!-- 리뷰 검색 -->
+	<select id="searchReview" parameterType="String" resultType="reviewVO">
+	    SELECT * FROM cs_review 
+	    WHERE review_title LIKE CONCAT('%', #{searchTerm}, '%')
+	</select>
+
+</mapper>
